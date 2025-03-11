@@ -1,5 +1,16 @@
 # 🚀 Cours Complet de JavaScript
 
+## ⚠️ État du Cours
+
+**IMPORTANT : Ce cours est actuellement en cours de développement**
+
+- [x] Chapitres existants : 12/14
+- [ ] Chapitres manquants :
+  - Commentaires & JSDoc
+  - Manipulation des Dates
+
+Les chapitres manquants seront ajoutés prochainement. Les contributions sont les bienvenues !
+
 ## Introduction
 
 Bienvenue dans ce parcours complet d'apprentissage de JavaScript, conçu pour vous guider de débutant à développeur confirmé. Ce dépôt propose une ressource comprehensive couvrant tous les aspects essentiels du langage JavaScript moderne.
@@ -86,6 +97,19 @@ Bienvenue dans ce parcours complet d'apprentissage de JavaScript, conçu pour vo
     - Requêtes asynchrones
     - Gestion des réponses
 
+### 🚧 Chapitres à Venir
+
+13. **Commentaires & JSDoc**
+
+    - Documentation de code
+    - Standards de commentaires
+    - Génération automatique de documentation
+
+14. **Manipulation des Dates**
+    - Création et manipulation de dates
+    - Formatage et localisation
+    - Opérations avancées sur les dates
+
 ## 🛠 Technologies Couvertes
 
 - JavaScript (ES6+)
@@ -102,17 +126,18 @@ Bienvenue dans ce parcours complet d'apprentissage de JavaScript, conçu pour vo
 
 ## 🚀 Comment Utiliser Ce Cours
 
-1. Parcourez les chapitres dans l'ordre
+1. Parcourez les chapitres existants
 2. Exécutez les exemples de code
 3. Pratiquez avec vos propres projets
-4. Explorez les liens de ressources supplémentaires
+4. Restez à l'écoute des mises à jour
 
 ## 🤝 Contribution
 
-Les contributions sont les bienvenues ! N'hésitez pas à :
+Les contributions sont vivement encouragées ! Vous pouvez :
 
 - Signaler des problèmes
 - Proposer des améliorations
+- Contribuer aux chapitres manquants
 - Ajouter des exemples
 
 ## 📚 Ressources Supplémentaires
@@ -127,7 +152,7 @@ Ce cours est sous licence MIT. Consultez le fichier LICENSE pour plus de détail
 
 ---
 
-**Dernière mise à jour :** Mars 2024
-**Version :** 1.0.0
+**Dernière mise à jour :** Mars 2025
+**Version :** 0.8.0 (Version de développement)
 
 Bon apprentissage et amusez-vous bien avec JavaScript ! 🎉👩‍💻👨‍💻
