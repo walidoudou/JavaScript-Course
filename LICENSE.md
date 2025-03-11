@@ -1,6 +1,6 @@
 # Licence MIT pour Matériel Éducatif
 
-Copyright (c) 2024 Contributeurs du Cours Complet de JavaScript
+Copyright (c) 2025 Contributeurs du Cours Complet de JavaScript
 
 Permission est accordée, gratuitement, à toute personne obtenant une copie
 de ces fichiers de cours et de documentation associés (le "Matériel Éducatif"),
