@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mes tâches</title>
+    <link rel="stylesheet" href="style.css" />
+    <!-- type="module" : différé automatiquement, le DOM est prêt quand le script s'exécute. -->
+    <script type="module" src="src/main.js"></script>
+  </head>
+  <body>
+    <main class="app">
+      <h1>Mes tâches</h1>
+
+      <form id="formulaire">
+        <input
+          id="nouvelle-tache"
+          aria-label="Nouvelle tâche"
+          name="titre"
+          placeholder="Que faut-il faire ?"
+          required
+          maxlength="200"
+          autocomplete="off"
+        />
+        <button>Ajouter</button>
+      </form>
+      <p id="erreur" class="erreur" role="alert" hidden></p>
+
+      <div id="barre" class="barre" hidden>
+        <button type="button" id="tout-basculer">Tout cocher</button>
+        <nav id="filtres" aria-label="Filtrer les tâches">
+          <a href="#/toutes">Toutes</a>
+          <a href="#/actives">Actives</a>
+          <a href="#/terminees">Terminées</a>
+        </nav>
+      </div>
+
+      <ul id="liste" class="liste"></ul>
+      <p id="vide" class="vide"></p>
+
+      <footer id="pied" class="pied" hidden>
+        <span id="compteur" aria-live="polite"></span>
+        <button type="button" id="effacer-terminees">
+          Effacer les terminées
+        </button>
+      </footer>
+    </main>
+
+    <!-- Modèle cloné pour chaque tâche : la structure HTML reste dans le HTML. -->
+    <template id="modele-tache">
+      <li class="tache">
+        <input type="checkbox" class="basculer" />
+        <label class="titre"></label>
+        <button type="button" class="supprimer">×</button>
+      </li>
+    </template>
+  </body>
+</html>

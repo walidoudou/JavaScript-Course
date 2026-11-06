@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Démo — 24 Les événements et les formulaires</title>
+    <style>
+      :root {
+        font-family: system-ui, sans-serif;
+        line-height: 1.5;
+      }
+      body {
+        max-width: 50rem;
+        margin: 0 auto;
+        padding: 1rem;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      section {
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 0 1rem 1rem;
+        margin-block: 1rem;
+      }
+      :focus-visible {
+        outline: 3px solid orange;
+        outline-offset: 2px;
+      }
+      #exterieur {
+        padding: 1rem;
+        background: #eef;
+      }
+      .journal {
+        background: #f4f4f4;
+        padding: 0.5rem;
+        border-radius: 4px;
+        min-height: 2rem;
+        font-family: ui-monospace, monospace;
+        font-size: 0.9rem;
+      }
+      .terminee span {
+        text-decoration: line-through;
+        color: #666;
+      }
+      .erreur {
+        display: block;
+        color: crimson;
+      }
+      input:user-invalid,
+      input[aria-invalid="true"] {
+        border-color: crimson;
+      }
+      .ok {
+        color: green;
+      }
+      .ko {
+        color: crimson;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Démo du chapitre 24 — Événements et formulaires</h1>
+    <p>Ouvrez la console (<kbd>F12</kbd>) pour voir les messages. Le code est en bas du fichier.</p>
+
+    <section aria-labelledby="titre-verifications">
+      <h2 id="titre-verifications">Vérifications automatiques</h2>
+      <p id="bilan" role="status"></p>
+      <ul id="liste-verifications"></ul>
+    </section>
+
+    <section aria-labelledby="titre-propagation">
+      <h2 id="titre-propagation">1. Propagation</h2>
+      <div id="exterieur">
+        div#exterieur
+        <button type="button" id="interieur">Cliquez-moi</button>
+      </div>
+      <ol class="journal" id="journal-propagation" aria-live="polite"></ol>
+    </section>
+
+    <section aria-labelledby="titre-delegation">
+      <h2 id="titre-delegation">2. Délégation : liste de tâches</h2>
+      <form id="ajout-tache">
+        <label for="texte-tache">Nouvelle tâche</label>
+        <input id="texte-tache" name="texte" required />
+        <button type="submit">Ajouter</button>
+      </form>
+      <ul id="taches"></ul>
+      <p id="bilan-taches" role="status"></p>
+    </section>
+
+    <section aria-labelledby="titre-clavier">
+      <h2 id="titre-clavier">3. Clavier : <code>key</code> ou <code>code</code></h2>
+      <p>
+        <label for="zone-touches">Appuyez sur des touches ici :</label>
+        <input id="zone-touches" autocomplete="off" />
+      </p>
+      <p class="journal" id="journal-touches">key = … · code = …</p>
+      <p>Raccourci : <kbd>/</kbd> place le focus dans ce champ.</p>
+    </section>
+
+    <section aria-labelledby="titre-formulaire">
+      <h2 id="titre-formulaire">4. Formulaire validé et accessible</h2>
+      <form id="inscription">
+        <p>
+          <label for="pseudo">Pseudo</label>
+          <input
+            id="pseudo"
+            name="pseudo"
+            required
+            minlength="3"
+            maxlength="20"
+            pattern="[a-z0-9_]+"
+            autocomplete="username"
+            aria-describedby="aide-pseudo erreur-pseudo"
+          />
+          <small id="aide-pseudo">3 à 20 caractères : minuscules, chiffres ou « _ ».</small>
+          <span id="erreur-pseudo" class="erreur"></span>
+        </p>
+        <p>
+          <label for="email">E-mail</label>
+          <input id="email" name="email" type="email" required autocomplete="email" aria-describedby="erreur-email" />
+          <span id="erreur-email" class="erreur"></span>
+        </p>
+        <p>
+          <label for="age">Âge</label>
+          <input id="age" name="age" type="number" min="13" max="120" aria-describedby="erreur-age" />
+          <span id="erreur-age" class="erreur"></span>
+        </p>
+        <fieldset>
+          <legend>Centres d'intérêt</legend>
+          <label><input type="checkbox" name="interets" value="js" checked /> JavaScript</label>
+          <label><input type="checkbox" name="interets" value="css" /> CSS</label>
+          <label><input type="checkbox" name="interets" value="a11y" checked /> Accessibilité</label>
+        </fieldset>
+        <p><label><input type="checkbox" name="newsletter" /> Recevoir la lettre d'information</label></p>
+        <button type="submit">S'inscrire</button>
+      </form>
+      <pre class="journal" id="resultat" role="status"></pre>
+    </section>
+
+    <section aria-labelledby="titre-dialogue">
+      <h2 id="titre-dialogue">5. Boîte de dialogue et événement personnalisé</h2>
+      <button type="button" id="ouvrir-suppression">Vider le panier</button>
+      <dialog id="confirmation" aria-labelledby="titre-confirmation">
+        <form method="dialog">
+          <h3 id="titre-confirmation">Vider le panier ?</h3>
+          <button value="annuler" autofocus>Annuler</button>
+          <button value="confirmer">Vider</button>
+        </form>
+      </dialog>
+      <p id="etat-panier" role="status"></p>
+    </section>
+
+    <script type="module">
+      const resultats = [];
+      function verifier(description, condition) {
+        resultats.push({ description, ok: Boolean(condition) });
+        console[condition ? "log" : "error"](`${condition ? "✓" : "✗"} ${description}`);
+      }
+
+      // ---------- 1. Propagation ----------
+      const journalPropagation = document.getElementById("journal-propagation");
+      const phases = ["aucune", "capture", "cible", "bouillonnement"];
+      const vus = [];
+      const noter = (nom) => (event) => {
+        const ligne = `${nom} — ${phases[event.eventPhase]}`;
+        vus.push(ligne);
+        const li = document.createElement("li");
+        li.textContent = ligne;
+        journalPropagation.append(li);
+      };
+      const exterieur = document.getElementById("exterieur");
+      const interieur = document.getElementById("interieur");
+      interieur.addEventListener("click", () => journalPropagation.replaceChildren(), { capture: true });
+      exterieur.addEventListener("click", noter("extérieur"), { capture: true });
+      interieur.addEventListener("click", noter("intérieur"));
+      exterieur.addEventListener("click", noter("extérieur"));
+      interieur.click();
+      verifier(
+        "ordre capture → cible → bouillonnement",
+        vus.join(" | ") === "extérieur — capture | intérieur — cible | extérieur — bouillonnement",
+      );
+
+      // ---------- 2. Délégation ----------
+      const formulaireTache = document.getElementById("ajout-tache");
+      const champTache = formulaireTache.elements.texte;
+      const liste = document.getElementById("taches");
+      const bilanTaches = document.getElementById("bilan-taches");
+
+      function creerBouton(action, texte) {
+        const bouton = document.createElement("button");
+        bouton.type = "button";
+        bouton.dataset.action = action;
+        bouton.textContent = texte;
+        return bouton;
+      }
+      function annoncer() {
+        const n = liste.querySelectorAll("li:not(.terminee)").length;
+        bilanTaches.textContent = `${n} tâche${n > 1 ? "s" : ""} restante${n > 1 ? "s" : ""}`;
+      }
+      formulaireTache.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const texte = new FormData(formulaireTache).get("texte").trim();
+        if (!texte) return;
+        const li = document.createElement("li");
+        const titre = document.createElement("span");
+        titre.textContent = texte;
+        const terminer = creerBouton("terminer", "Terminer");
+        terminer.setAttribute("aria-pressed", "false");
+        li.append(titre, " ", terminer, " ", creerBouton("supprimer", "Supprimer"));
+        liste.append(li);
+        formulaireTache.reset();
+        annoncer();
+      });
+      liste.addEventListener("click", (event) => {
+        const bouton = event.target.closest("button[data-action]");
+        if (!bouton) return;
+        const li = bouton.closest("li");
+        if (bouton.dataset.action === "terminer") {
+          bouton.setAttribute("aria-pressed", String(li.classList.toggle("terminee")));
+        } else {
+          const voisine = li.nextElementSibling ?? li.previousElementSibling;
+          li.remove();
+          (voisine?.querySelector("button") ?? champTache).focus();
+        }
+        annoncer();
+      });
+      for (const texte of ["Acheter du pain", "  Appeler le garage ", "<b>Réviser</b> le DOM"]) {
+        champTache.value = texte;
+        formulaireTache.requestSubmit();
+      }
+      champTache.value = "   ";
+      formulaireTache.requestSubmit(); // ignoré : que des espaces
+      verifier("requestSubmit() + délégation : 3 tâches ajoutées", liste.children.length === 3);
+      verifier("le texte saisi n'est pas interprété comme du HTML", !liste.querySelector("b"));
+      liste.children[1].querySelector('[data-action="terminer"]').click();
+      verifier("aria-pressed suit l'état", liste.children[1].querySelector("[aria-pressed]").ariaPressed === "true");
+      verifier("la région live annonce les tâches restantes", bilanTaches.textContent === "2 tâches restantes");
+
+      // ---------- 3. Clavier ----------
+      const zoneTouches = document.getElementById("zone-touches");
+      const journalTouches = document.getElementById("journal-touches");
+      zoneTouches.addEventListener("keydown", (event) => {
+        journalTouches.textContent = `key = ${JSON.stringify(event.key)} · code = ${JSON.stringify(event.code)}`;
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.isComposing || event.defaultPrevented) return;
+        const dansUnChamp = event.target instanceof Element && event.target.closest("input, textarea, select, [contenteditable]");
+        if (event.key === "/" && !dansUnChamp) {
+          event.preventDefault();
+          zoneTouches.focus();
+        }
+      });
+      document.body.dispatchEvent(new KeyboardEvent("keydown", { key: "/", code: "Digit7", bubbles: true, cancelable: true }));
+      verifier("raccourci « / » : focus dans le champ", document.activeElement === zoneTouches);
+      zoneTouches.dispatchEvent(new KeyboardEvent("keydown", { key: "a", code: "KeyQ", bubbles: true }));
+      verifier("key et code sont distincts (AZERTY)", journalTouches.textContent === 'key = "a" · code = "KeyQ"');
+      zoneTouches.blur();
+
+      // ---------- 4. Formulaire ----------
+      const formulaire = document.getElementById("inscription");
+      const resultat = document.getElementById("resultat");
+      const messages = {
+        valueMissing: () => "Ce champ est obligatoire.",
+        typeMismatch: () => "Le format n'est pas valide.",
+        patternMismatch: () => "Caractères autorisés : minuscules, chiffres et « _ ».",
+        tooShort: (champ) => `Au moins ${champ.minLength} caractères.`,
+        rangeUnderflow: (champ) => `La valeur minimale est ${champ.min}.`,
+        rangeOverflow: (champ) => `La valeur maximale est ${champ.max}.`,
+      };
+      const messagePour = (champ) =>
+        Object.entries(messages).find(([cause]) => champ.validity[cause])?.[1](champ) ?? champ.validationMessage;
+
+      function mettreAJourErreur(champ) {
+        const zone = document.getElementById(`erreur-${champ.name}`);
+        if (!zone) return;
+        zone.textContent = champ.validity.valid ? "" : messagePour(champ);
+        if (champ.validity.valid) champ.removeAttribute("aria-invalid");
+        else champ.setAttribute("aria-invalid", "true");
+      }
+      function lireInscription(form) {
+        const donnees = new FormData(form);
+        const age = donnees.get("age");
+        return {
+          pseudo: donnees.get("pseudo").trim(),
+          email: donnees.get("email").trim(),
+          age: age === "" ? null : Number(age),
+          interets: donnees.getAll("interets"),
+          newsletter: donnees.has("newsletter"),
+        };
+      }
+
+      formulaire.noValidate = true;
+      let derniereInscription = null;
+      formulaire.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const champs = [...formulaire.elements].filter((el) => el.willValidate);
+        champs.forEach(mettreAJourErreur);
+        const premierInvalide = champs.find((champ) => !champ.validity.valid);
+        if (premierInvalide) {
+          premierInvalide.focus();
+          resultat.textContent = "Corrigez les champs signalés.";
+          return;
+        }
+        derniereInscription = lireInscription(formulaire);
+        resultat.textContent = JSON.stringify(derniereInscription, null, 2);
+      });
+      formulaire.addEventListener("input", (event) => {
+        if (event.target.hasAttribute("aria-invalid")) mettreAJourErreur(event.target);
+      });
+
+      formulaire.requestSubmit();
+      verifier("formulaire vide : focus sur le premier champ invalide", document.activeElement.id === "pseudo");
+      verifier("message d'erreur relié au champ", document.getElementById("erreur-pseudo").textContent === "Ce champ est obligatoire.");
+      verifier("aria-invalid=\"true\" posé", document.getElementById("pseudo").getAttribute("aria-invalid") === "true");
+
+      const { pseudo, email, age } = formulaire.elements;
+      pseudo.value = "Ada";
+      pseudo.dispatchEvent(new Event("input", { bubbles: true }));
+      verifier("le message se met à jour pendant la correction", document.getElementById("erreur-pseudo").textContent.startsWith("Caractères"));
+      pseudo.value = "ada_l";
+      email.value = "ada@exemple.fr";
+      age.value = "36";
+      formulaire.requestSubmit();
+      verifier(
+        "FormData : getAll pour les cases, has pour une case seule, Number pour l'âge",
+        JSON.stringify(derniereInscription) ===
+          '{"pseudo":"ada_l","email":"ada@exemple.fr","age":36,"interets":["js","a11y"],"newsletter":false}',
+      );
+      formulaire.reset();
+      resultat.textContent = "";
+
+      // ---------- 5. Dialogue + EventTarget ----------
+      class Panier extends EventTarget {
+        #articles = new Map([["the-vert", 2], ["cafe", 1]]);
+        get total() {
+          return [...this.#articles.values()].reduce((somme, n) => somme + n, 0);
+        }
+        vider() {
+          const demande = new CustomEvent("avant-vidage", { cancelable: true, detail: { total: this.total } });
+          if (!this.dispatchEvent(demande)) return false;
+          this.#articles.clear();
+          this.dispatchEvent(new CustomEvent("change", { detail: { total: 0 } }));
+          return true;
+        }
+      }
+      const panier = new Panier();
+      const etat = document.getElementById("etat-panier");
+      etat.textContent = `Panier : ${panier.total} articles`;
+      panier.addEventListener("change", (event) => {
+        etat.textContent = `Panier : ${event.detail.total} article`;
+      });
+
+      const dialogue = document.getElementById("confirmation");
+      document.getElementById("ouvrir-suppression").addEventListener("click", () => {
+        dialogue.returnValue = "";
+        dialogue.showModal();
+      });
+      dialogue.addEventListener("close", () => {
+        if (dialogue.returnValue === "confirmer") panier.vider();
+      });
+
+      const refus = new AbortController();
+      panier.addEventListener("avant-vidage", (event) => event.preventDefault(), { signal: refus.signal });
+      verifier("dispatchEvent renvoie false si un écouteur annule", panier.vider() === false && panier.total === 3);
+      refus.abort();
+
+      document.getElementById("ouvrir-suppression").click();
+      verifier("showModal() place le focus dans la boîte (autofocus)", dialogue.open && document.activeElement.value === "annuler");
+      const fermee = new Promise((resoudre) => dialogue.addEventListener("close", resoudre, { once: true }));
+      dialogue.querySelector('[value="confirmer"]').click();
+      await fermee; // l'événement close est envoyé de façon asynchrone
+      verifier("la valeur du bouton arrive dans returnValue", dialogue.returnValue === "confirmer" && panier.total === 0);
+
+      // ---------- Bilan ----------
+      const listeVerifs = document.getElementById("liste-verifications");
+      for (const { description, ok } of resultats) {
+        const li = document.createElement("li");
+        li.className = ok ? "ok" : "ko";
+        li.textContent = `${ok ? "✓" : "✗"} ${description}`;
+        listeVerifs.append(li);
+      }
+      const echecs = resultats.filter((r) => !r.ok).length;
+      document.getElementById("bilan").textContent =
+        `${resultats.length - echecs} vérification(s) réussie(s), ${echecs} échec(s).`;
+    </script>
+  </body>
+</html>

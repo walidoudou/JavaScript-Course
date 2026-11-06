@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Démo — 23 Le DOM</title>
+    <style>
+      :root {
+        --couleur-accent: #0b6bcb;
+        font-family: system-ui, sans-serif;
+        line-height: 1.5;
+      }
+      body {
+        max-width: 50rem;
+        margin: 0 auto;
+        padding: 1rem;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      section {
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 0 1rem 1rem;
+        margin-block: 1rem;
+      }
+      button {
+        background: var(--couleur-accent);
+        color: white;
+        border: 0;
+        border-radius: 4px;
+        padding: 0.3rem 0.8rem;
+        cursor: pointer;
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      :focus-visible {
+        outline: 3px solid orange;
+        outline-offset: 2px;
+      }
+      .en-promo .nom::after {
+        content: " (promo)";
+        color: crimson;
+      }
+      .resultat {
+        background: #f4f4f4;
+        padding: 0.5rem;
+        border-radius: 4px;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+      .boite {
+        resize: horizontal;
+        overflow: auto;
+        border: 2px dashed var(--couleur-accent);
+        padding: 0.5rem;
+        width: 30rem;
+        max-width: 100%;
+      }
+      .boite.compact {
+        background: #fff3cd;
+      }
+      .a-reveler {
+        opacity: 0;
+        transform: translateY(1rem);
+        transition: opacity 0.6s, transform 0.6s;
+      }
+      .a-reveler.visible {
+        opacity: 1;
+        transform: none;
+      }
+      .ok {
+        color: green;
+      }
+      .ko {
+        color: crimson;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Démo du chapitre 23 — Le DOM</h1>
+    <p>
+      Ouvrez la console (<kbd>F12</kbd>) pour voir les messages. Le code se trouve en bas de ce fichier, dans un
+      <code>&lt;script type="module"&gt;</code>.
+    </p>
+
+    <section id="verifications" aria-labelledby="titre-verifications">
+      <h2 id="titre-verifications">Vérifications automatiques</h2>
+      <p id="bilan" role="status"></p>
+      <ul id="liste-verifications"></ul>
+    </section>
+
+    <section aria-labelledby="titre-boutique">
+      <h2 id="titre-boutique">1. Sélectionner, parcourir, déplacer</h2>
+      <ul class="produits">
+        <li class="produit" data-id="p1" data-prix="12.5">
+          <span class="nom">Thé vert</span>
+          <button type="button" class="ajouter">Ajouter</button>
+        </li>
+        <li class="produit en-promo" data-id="p2" data-prix="8">
+          <span class="nom">Café moulu</span>
+          <button type="button" class="ajouter">Ajouter</button>
+        </li>
+        <li class="produit" data-id="p3" data-prix="4.2">
+          <span class="nom">Chocolat noir</span>
+          <button type="button" class="ajouter" disabled>Épuisé</button>
+        </li>
+      </ul>
+      <button type="button" id="trier">Trier par prix</button>
+      <p>Total des prix : <output id="total-prix"></output></p>
+      <p id="statut-panier" role="status"></p>
+    </section>
+
+    <section aria-labelledby="titre-xss">
+      <h2 id="titre-xss">2. Insérer du contenu sans faille XSS</h2>
+      <p>Chaîne malveillante : <code id="chaine-piegee"></code></p>
+      <p>Avec <code>textContent</code> :</p>
+      <p class="resultat" id="avec-textcontent"></p>
+      <p>Avec <code>echapperHtml()</code> dans un gabarit :</p>
+      <p class="resultat" id="avec-echappement"></p>
+      <p>Avec <code>setHTML()</code> (Sanitizer API) :</p>
+      <p class="resultat" id="avec-sethtml"></p>
+    </section>
+
+    <section aria-labelledby="titre-modele">
+      <h2 id="titre-modele">3. <code>&lt;template&gt;</code> et fragment</h2>
+      <template id="modele-livre">
+        <li><cite class="titre"></cite> — <span class="auteur"></span> (<span class="annee"></span>)</li>
+      </template>
+      <ul id="livres"></ul>
+    </section>
+
+    <section aria-labelledby="titre-styles">
+      <h2 id="titre-styles">4. Classes, variables CSS et accessibilité</h2>
+      <p>
+        <label>Couleur d'accent : <input type="color" id="choix-couleur" value="#0b6bcb" /></label>
+      </p>
+      <button type="button" id="bouton-filtres" aria-expanded="false" aria-controls="filtres">Filtres</button>
+      <div id="filtres" hidden>
+        <p><label><input type="checkbox" name="bio" /> Bio uniquement</label></p>
+      </div>
+    </section>
+
+    <section aria-labelledby="titre-observateurs">
+      <h2 id="titre-observateurs">5. Observateurs</h2>
+      <p>Redimensionnez la boîte (coin inférieur droit) : en dessous de 300 px, elle passe en mode compact.</p>
+      <div class="boite" id="boite">Largeur : <output id="largeur-boite"></output></div>
+      <p>Journal du <code>MutationObserver</code> :</p>
+      <ol id="journal-mutations"></ol>
+      <p style="margin-top: 60vh" class="a-reveler" id="revele">
+        Ce paragraphe apparaît en fondu grâce à <code>IntersectionObserver</code>.
+      </p>
+    </section>
+
+    <section aria-labelledby="titre-composant">
+      <h2 id="titre-composant">6. Un Web Component</h2>
+      <compteur-clics valeur="3"></compteur-clics>
+    </section>
+
+    <script type="module">
+      // ---------- Petit outil de vérification ----------
+      const resultats = [];
+      function verifier(description, condition) {
+        resultats.push({ description, ok: Boolean(condition) });
+        console[condition ? "log" : "error"](`${condition ? "✓" : "✗"} ${description}`);
+      }
+
+      // ---------- 1. Sélectionner, parcourir, déplacer ----------
+      const liste = document.querySelector(".produits");
+      const produits = liste.querySelectorAll(".produit");
+      verifier("querySelectorAll trouve 3 produits", produits.length === 3);
+      verifier("une NodeList n'est pas un tableau", !Array.isArray(produits) && typeof produits.forEach === "function");
+
+      const total = [...produits].reduce((somme, li) => somme + Number(li.dataset.prix), 0);
+      const formatPrix = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
+      document.getElementById("total-prix").textContent = formatPrix.format(total);
+      verifier("dataset donne des chaînes, converties avec Number()", total === 24.7);
+
+      const cafe = liste.querySelector('[data-id="p2"]');
+      verifier("closest remonte jusqu'au <li>", cafe.querySelector("button").closest(".produit") === cafe);
+      verifier("nextElementSibling ignore les nœuds texte", cafe.nextElementSibling.dataset.id === "p3");
+      verifier("childNodes contient les nœuds texte d'indentation", cafe.childNodes.length > cafe.children.length);
+
+      const statutPanier = document.getElementById("statut-panier");
+      liste.addEventListener("click", (event) => {
+        const bouton = event.target.closest("button.ajouter");
+        if (!bouton) return;
+        const nom = bouton.closest(".produit").querySelector(".nom").textContent;
+        statutPanier.textContent = `${nom} ajouté au panier.`; // région live : annoncé
+      });
+
+      document.getElementById("trier").addEventListener("click", () => {
+        const tries = [...liste.children].toSorted((a, b) => Number(a.dataset.prix) - Number(b.dataset.prix));
+        liste.append(...tries); // déplace les éléments existants
+      });
+      document.getElementById("trier").click();
+      verifier(
+        "append() déplace les nœuds existants (tri par prix)",
+        [...liste.children].map((li) => li.dataset.id).join() === "p3,p2,p1",
+      );
+
+      // ---------- 2. XSS ----------
+      function echapperHtml(valeur) {
+        return String(valeur)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#39;");
+      }
+      const piegee = '<b>Léa</b><img src=x onerror="document.title = \'piraté\'">';
+      document.getElementById("chaine-piegee").textContent = piegee;
+      document.getElementById("avec-textcontent").textContent = `Bonjour ${piegee} !`;
+
+      // Un gabarit HTML n'est acceptable que si chaque valeur est échappée
+      document.getElementById("avec-echappement").innerHTML = `Bonjour <strong>${echapperHtml(piegee)}</strong> !`;
+
+      const zoneSetHtml = document.getElementById("avec-sethtml");
+      if ("setHTML" in Element.prototype) {
+        zoneSetHtml.setHTML(`Bonjour ${piegee} !`);
+        verifier("setHTML() retire l'image piégée", !zoneSetHtml.querySelector("img") && zoneSetHtml.querySelector("b"));
+      } else {
+        zoneSetHtml.textContent = "Sanitizer API indisponible dans ce navigateur : repli sur textContent.";
+      }
+      verifier("textContent n'interprète pas le HTML", !document.querySelector("#avec-textcontent img"));
+      verifier("le texte échappé ne crée aucun élément <img>", !document.querySelector("#avec-echappement img"));
+
+      // ---------- 3. template + fragment ----------
+      const livres = [
+        { titre: "Les Misérables", auteur: "Victor Hugo", annee: 1862 },
+        { titre: "<Inconnu>", auteur: "Anonyme", annee: 1900 },
+        { titre: "Émaux et Camées", auteur: "Théophile Gautier", annee: 1852 },
+      ];
+      const modele = document.getElementById("modele-livre");
+      const fragment = document.createDocumentFragment();
+      for (const livre of livres.toSorted((a, b) => a.titre.localeCompare(b.titre, "fr"))) {
+        const copie = modele.content.cloneNode(true);
+        copie.querySelector(".titre").textContent = livre.titre;
+        copie.querySelector(".auteur").textContent = livre.auteur;
+        copie.querySelector(".annee").textContent = livre.annee;
+        fragment.append(copie);
+      }
+      const listeLivres = document.getElementById("livres");
+      listeLivres.append(fragment);
+      verifier("le fragment est vidé après insertion", fragment.childNodes.length === 0);
+      verifier("« <Inconnu> » est affiché comme du texte", listeLivres.querySelector(".titre").textContent === "<Inconnu>");
+      verifier("localeCompare trie « Émaux » avec les E", listeLivres.children[1].textContent.startsWith("Émaux"));
+
+      // ---------- 4. Classes, variables CSS, ARIA ----------
+      const racine = document.documentElement;
+      document.getElementById("choix-couleur").addEventListener("input", (event) => {
+        racine.style.setProperty("--couleur-accent", event.target.value);
+      });
+      racine.style.setProperty("--couleur-accent", "#c2185b");
+      const fondBouton = getComputedStyle(document.getElementById("trier")).backgroundColor;
+      verifier("une variable CSS modifiée en JS change le style calculé", fondBouton === "rgb(194, 24, 91)");
+      racine.style.setProperty("--couleur-accent", "#0b6bcb");
+
+      const boutonFiltres = document.getElementById("bouton-filtres");
+      const panneau = document.getElementById(boutonFiltres.getAttribute("aria-controls"));
+      boutonFiltres.addEventListener("click", () => {
+        const ouvert = boutonFiltres.getAttribute("aria-expanded") === "true";
+        boutonFiltres.setAttribute("aria-expanded", String(!ouvert));
+        panneau.hidden = ouvert;
+      });
+      boutonFiltres.click();
+      verifier("aria-expanded et hidden restent synchronisés", boutonFiltres.ariaExpanded === "true" && !panneau.hidden);
+      boutonFiltres.click();
+
+      const bouton = document.createElement("button");
+      bouton.setAttribute("disabled", "false");
+      verifier('setAttribute("disabled", "false") désactive quand même', bouton.disabled === true);
+
+      // ---------- 5. Observateurs ----------
+      const boite = document.getElementById("boite");
+      new ResizeObserver(([entree]) => {
+        const largeur = entree.contentBoxSize[0].inlineSize;
+        document.getElementById("largeur-boite").textContent = `${Math.round(largeur)} px`;
+        entree.target.classList.toggle("compact", largeur < 300);
+      }).observe(boite);
+
+      const journal = document.getElementById("journal-mutations");
+      const observateurMutations = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+          const li = document.createElement("li");
+          li.textContent = `${mutation.type} sur ${mutation.target.id || mutation.target.nodeName}`;
+          journal.append(li); // le journal n'est pas observé : pas de boucle
+        }
+      });
+      observateurMutations.observe(listeLivres, { childList: true, attributes: true });
+      listeLivres.dataset.etat = "observe";
+      const nouveau = document.createElement("li");
+      nouveau.textContent = "Ajouté après coup";
+      listeLivres.append(nouveau);
+      await Promise.resolve(); // laisse passer la microtâche du MutationObserver
+      verifier("MutationObserver regroupe les mutations (2 entrées)", journal.children.length === 2);
+
+      new IntersectionObserver(
+        (entrees, obs) => {
+          for (const entree of entrees) {
+            if (!entree.isIntersecting) continue;
+            entree.target.classList.add("visible");
+            obs.unobserve(entree.target);
+          }
+        },
+        { threshold: 0.5 },
+      ).observe(document.getElementById("revele"));
+
+      // ---------- 6. Web Component ----------
+      class CompteurClics extends HTMLElement {
+        static observedAttributes = ["valeur"];
+        #bouton;
+
+        connectedCallback() {
+          if (this.#bouton) return;
+          this.#bouton = document.createElement("button");
+          this.#bouton.type = "button";
+          this.#bouton.addEventListener("click", () => this.setAttribute("valeur", String(this.valeur + 1)));
+          this.append(this.#bouton);
+          this.#afficher();
+        }
+
+        attributeChangedCallback() {
+          this.#afficher();
+        }
+
+        get valeur() {
+          return Number(this.getAttribute("valeur") ?? 0);
+        }
+
+        #afficher() {
+          if (this.#bouton) this.#bouton.textContent = `Cliqué ${this.valeur} fois`;
+        }
+      }
+      customElements.define("compteur-clics", CompteurClics);
+      const compteur = document.querySelector("compteur-clics");
+      compteur.querySelector("button").click();
+      verifier("l'élément personnalisé réagit à ses attributs", compteur.textContent === "Cliqué 4 fois");
+
+      // ---------- Bilan ----------
+      const listeVerifs = document.getElementById("liste-verifications");
+      for (const { description, ok } of resultats) {
+        const li = document.createElement("li");
+        li.className = ok ? "ok" : "ko";
+        li.textContent = `${ok ? "✓" : "✗"} ${description}`;
+        listeVerifs.append(li);
+      }
+      const echecs = resultats.filter((r) => !r.ok).length;
+      document.getElementById("bilan").textContent =
+        `${resultats.length - echecs} vérification(s) réussie(s), ${echecs} échec(s).`;
+    </script>
+  </body>
+</html>

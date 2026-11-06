@@ -1,0 +1,15 @@
+{
+  "name": "todo-app",
+  "version": "1.0.0",
+  "description": "Liste de tâches dans le navigateur (projet 3 du chapitre 32)",
+  "type": "module",
+  "scripts": {
+    "start": "node ../serveur-statique.js . 8080",
+    "test": "node --test",
+    "check": "node --check src/main.js && node --check src/taches.js && node --check src/stockage.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "MIT"
+}

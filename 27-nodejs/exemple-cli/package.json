@@ -1,0 +1,17 @@
+{
+  "name": "taches-cli",
+  "version": "1.0.0",
+  "description": "Petite liste de tâches en ligne de commande (fil rouge du chapitre 27)",
+  "type": "module",
+  "bin": {
+    "taches": "./bin/taches.js"
+  },
+  "scripts": {
+    "start": "node bin/taches.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=22.12"
+  },
+  "license": "MIT"
+}

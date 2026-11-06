@@ -1,0 +1,17 @@
+{
+  "name": "analyseur-de-texte",
+  "version": "1.0.0",
+  "description": "Statistiques et fréquences de mots d'un fichier texte (projet 5 du chapitre 32)",
+  "type": "module",
+  "bin": {
+    "analyser": "./cli.js"
+  },
+  "scripts": {
+    "start": "node cli.js exemples/phare.txt",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "MIT"
+}

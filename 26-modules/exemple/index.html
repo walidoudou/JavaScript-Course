@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <title>Exemple de modules</title>
+    <!-- L'import map doit précéder le premier script module. -->
+    <script type="importmap">
+      {
+        "imports": {
+          "#lib/": "./src/lib/"
+        }
+      }
+    </script>
+    <script type="module" src="./src/navigateur.js"></script>
+  </head>
+  <body>
+    <h1>Récapitulatif du panier</h1>
+    <pre id="sortie">Chargement…</pre>
+    <button id="bouton-csv" type="button">Exporter en CSV</button>
+    <p>Journal : <span id="journal"></span></p>
+  </body>
+</html>

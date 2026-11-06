@@ -1,0 +1,13 @@
+{
+  "name": "exemple-modules",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "imports": {
+    "#lib/*": "./src/lib/*"
+  },
+  "scripts": {
+    "start": "node src/main.js",
+    "csv": "node src/main.js --csv"
+  }
+}

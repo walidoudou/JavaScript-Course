@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="fr" data-theme="systeme">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Démo — 25 JSON et stockage côté client</title>
+    <style>
+      :root {
+        --taille-police: 16px;
+        --fond: white;
+        --texte: #222;
+        font-family: system-ui, sans-serif;
+        line-height: 1.5;
+        font-size: var(--taille-police);
+        color-scheme: light dark;
+      }
+      [data-theme="sombre"] {
+        --fond: #1e1e1e;
+        --texte: #eee;
+        color-scheme: dark;
+      }
+      [data-theme="clair"] {
+        color-scheme: light;
+      }
+      body {
+        max-width: 50rem;
+        margin: 0 auto;
+        padding: 1rem;
+        background: var(--fond);
+        color: var(--texte);
+      }
+      section {
+        border: 1px solid #888;
+        border-radius: 8px;
+        padding: 0 1rem 1rem;
+        margin-block: 1rem;
+      }
+      textarea {
+        width: 100%;
+        min-height: 6rem;
+        font-family: ui-monospace, monospace;
+      }
+      .journal {
+        background: #8882;
+        padding: 0.5rem;
+        border-radius: 4px;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        font-family: ui-monospace, monospace;
+        font-size: 0.85rem;
+      }
+      .ok {
+        color: green;
+      }
+      .ko {
+        color: crimson;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Démo du chapitre 25 — JSON et stockage</h1>
+    <p>
+      Ouvrez la console (<kbd>F12</kbd>) et l'onglet <strong>Application</strong> (ou <strong>Stockage</strong>) des
+      outils de développement. Les cookies ne fonctionnent que si la page est servie en HTTP(S) : lancez
+      <code>npx serve</code> dans ce dossier. Ouvrez la page dans deux onglets pour voir la synchronisation.
+    </p>
+
+    <section aria-labelledby="titre-verifications">
+      <h2 id="titre-verifications">Vérifications automatiques</h2>
+      <p id="bilan" role="status"></p>
+      <ul id="liste-verifications"></ul>
+    </section>
+
+    <section aria-labelledby="titre-json">
+      <h2 id="titre-json">1. Analyser du JSON</h2>
+      <label for="saisie-json">Collez ou modifiez du JSON :</label>
+      <textarea id="saisie-json" spellcheck="false">{"nom": "Ada", "langues": ["fr", "en"], "inscrite": "2026-11-06T09:30:00.000Z"}</textarea>
+      <p class="journal" id="resultat-json" role="status"></p>
+    </section>
+
+    <section aria-labelledby="titre-prefs">
+      <h2 id="titre-prefs">2. Préférences dans <code>localStorage</code>, synchronisées entre onglets</h2>
+      <p>
+        <label for="taille">Taille du texte</label>
+        <input type="range" id="taille" min="12" max="24" step="1" />
+        <label for="theme">Thème</label>
+        <select id="theme">
+          <option value="systeme">Système</option>
+          <option value="clair">Clair</option>
+          <option value="sombre">Sombre</option>
+        </select>
+      </p>
+      <p class="journal" id="journal-storage">Événements storage reçus : aucun</p>
+    </section>
+
+    <section aria-labelledby="titre-cookies">
+      <h2 id="titre-cookies">3. Cookies</h2>
+      <p class="journal" id="etat-cookies"></p>
+    </section>
+
+    <section aria-labelledby="titre-idb">
+      <h2 id="titre-idb">4. Notes dans IndexedDB</h2>
+      <form id="form-note">
+        <label for="texte-note">Nouvelle note</label>
+        <input id="texte-note" name="texte" required />
+        <button type="submit">Enregistrer</button>
+        <button type="button" id="vider-notes">Tout effacer</button>
+      </form>
+      <ul id="notes"></ul>
+      <p class="journal" id="quota"></p>
+    </section>
+
+    <script type="module">
+      const resultats = [];
+      function verifier(description, condition) {
+        resultats.push({ description, ok: Boolean(condition) });
+        console[condition ? "log" : "error"](`${condition ? "✓" : "✗"} ${description}`);
+      }
+
+      // ---------- 1. JSON ----------
+      const ISO_8601 = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/;
+      const reviverDates = (cle, valeur) =>
+        typeof valeur === "string" && ISO_8601.test(valeur) ? new Date(valeur) : valeur;
+
+      function analyserJson(texte) {
+        if (typeof texte !== "string") return { ok: false, erreur: new TypeError("Une chaîne était attendue") };
+        try {
+          return { ok: true, valeur: JSON.parse(texte, reviverDates) };
+        } catch (erreur) {
+          return { ok: false, erreur };
+        }
+      }
+
+      const saisie = document.getElementById("saisie-json");
+      const sortieJson = document.getElementById("resultat-json");
+      function afficherAnalyse() {
+        const resultat = analyserJson(saisie.value);
+        if (!resultat.ok) {
+          sortieJson.textContent = `${resultat.erreur.name} : ${resultat.erreur.message}`;
+          return;
+        }
+        const valeur = resultat.valeur;
+        const dates =
+          valeur !== null && typeof valeur === "object"
+            ? Object.keys(valeur).filter((cle) => valeur[cle] instanceof Date)
+            : [];
+        sortieJson.textContent =
+          `JSON valide. Réindenté :\n${JSON.stringify(resultat.valeur, null, 2)}` +
+          (dates.length ? `\nDates réhydratées : ${dates.join(", ")}` : "");
+      }
+      saisie.addEventListener("input", afficherAnalyse);
+      afficherAnalyse();
+
+      verifier("le reviver réhydrate les dates ISO", analyserJson(saisie.value).valeur.inscrite instanceof Date);
+      verifier("une virgule finale est une SyntaxError", analyserJson('{"a":1,}').erreur?.name === "SyntaxError");
+      verifier("JSON.parse(null) ne lève pas d'erreur (piège)", JSON.parse(null) === null);
+      verifier(
+        "stringify : undefined omis, NaN → null, Map → {}",
+        JSON.stringify({ a: undefined, b: NaN, c: new Map([[1, 2]]) }) === '{"b":null,"c":{}}',
+      );
+      const original = { quand: new Date(0), tags: new Set(["x"]) };
+      const copie = structuredClone(original);
+      verifier("structuredClone conserve Date et Set", copie.quand instanceof Date && copie.tags.has("x"));
+      if ("rawJSON" in JSON) {
+        const exact = JSON.parse('{"id":12345678901234567890}', (cle, valeur, contexte) =>
+          cle === "id" ? BigInt(contexte.source) : valeur,
+        );
+        verifier("ES2026 : context.source garde les grands entiers", exact.id === 12345678901234567890n);
+      }
+
+      // ---------- 2. Préférences ----------
+      const CLE = "demo25:prefs";
+      const DEFAUT = { theme: "systeme", taille: 16 };
+      const champTaille = document.getElementById("taille");
+      const champTheme = document.getElementById("theme");
+
+      function valider(brut) {
+        const taille = Number(brut?.taille);
+        return {
+          theme: ["clair", "sombre", "systeme"].includes(brut?.theme) ? brut.theme : DEFAUT.theme,
+          taille: Number.isInteger(taille) && taille >= 12 && taille <= 24 ? taille : DEFAUT.taille,
+        };
+      }
+      function lirePrefs() {
+        try {
+          return valider(JSON.parse(localStorage.getItem(CLE)));
+        } catch {
+          return { ...DEFAUT };
+        }
+      }
+      function appliquer(prefs) {
+        document.documentElement.dataset.theme = prefs.theme;
+        document.documentElement.style.setProperty("--taille-police", `${prefs.taille}px`);
+        champTheme.value = prefs.theme;
+        champTaille.value = prefs.taille;
+      }
+      function enregistrer() {
+        const prefs = valider({ theme: champTheme.value, taille: champTaille.value });
+        try {
+          localStorage.setItem(CLE, JSON.stringify(prefs));
+        } catch (erreur) {
+          console.warn("Préférences non enregistrées :", erreur.name);
+        }
+        appliquer(prefs);
+      }
+      champTheme.addEventListener("change", enregistrer);
+      champTaille.addEventListener("input", enregistrer);
+
+      const journalStorage = document.getElementById("journal-storage");
+      let nombreEvenements = 0;
+      window.addEventListener("storage", (event) => {
+        if (event.storageArea !== localStorage || (event.key !== CLE && event.key !== null)) return;
+        nombreEvenements++;
+        journalStorage.textContent = `Événements storage reçus : ${nombreEvenements} (dernière valeur : ${event.newValue})`;
+        appliquer(lirePrefs());
+      });
+      appliquer(lirePrefs());
+
+      verifier("la validation remplace les valeurs inconnues", valider({ theme: "rose", taille: "99" }).taille === 16);
+      verifier("un nombre stocké revient en chaîne", (() => {
+        try {
+          localStorage.setItem("demo25:essai", 42);
+          const lu = localStorage.getItem("demo25:essai");
+          localStorage.removeItem("demo25:essai");
+          return lu === "42";
+        } catch {
+          return true; // stockage indisponible (réglages du navigateur) : rien à vérifier
+        }
+      })());
+
+      // ---------- 3. Cookies ----------
+      function lireCookies(chaine) {
+        const cookies = new Map();
+        for (const paire of chaine.split(";")) {
+          const position = paire.indexOf("=");
+          if (position === -1) continue;
+          const nom = paire.slice(0, position).trim();
+          const brute = paire.slice(position + 1).trim();
+          if (!nom || cookies.has(nom)) continue;
+          try {
+            cookies.set(nom, decodeURIComponent(brute));
+          } catch {
+            cookies.set(nom, brute);
+          }
+        }
+        return cookies;
+      }
+      verifier(
+        "lireCookies décode les valeurs",
+        lireCookies("a=1; recherche=th%C3%A9%20%26%20caf%C3%A9").get("recherche") === "thé & café",
+      );
+      const etatCookies = document.getElementById("etat-cookies");
+      if (location.protocol.startsWith("http")) {
+        document.cookie = `demo25=${encodeURIComponent("thé & café")}; Max-Age=60; Path=/; SameSite=Lax`;
+        const lu = lireCookies(document.cookie).get("demo25");
+        etatCookies.textContent = `document.cookie = ${JSON.stringify(document.cookie)}\nValeur décodée : ${lu}`;
+        verifier("document.cookie : écriture puis lecture", lu === "thé & café");
+        document.cookie = "demo25=; Max-Age=0; Path=/";
+        verifier("Max-Age=0 supprime le cookie", !lireCookies(document.cookie).has("demo25"));
+      } else {
+        etatCookies.textContent = "Page ouverte en file:// : les cookies sont désactivés. Servez le dossier en HTTP.";
+      }
+
+      // ---------- 4. IndexedDB ----------
+      function enPromesse(requete) {
+        return new Promise((resoudre, rejeter) => {
+          requete.onsuccess = () => resoudre(requete.result);
+          requete.onerror = () => rejeter(requete.error);
+        });
+      }
+      function finDeTransaction(transaction) {
+        return new Promise((resoudre, rejeter) => {
+          transaction.oncomplete = () => resoudre();
+          transaction.onerror = transaction.onabort = () => rejeter(transaction.error);
+        });
+      }
+      async function ouvrirCarnet() {
+        const requete = indexedDB.open("demo25-carnet", 1);
+        requete.onupgradeneeded = () => {
+          requete.result.createObjectStore("notes", { keyPath: "id", autoIncrement: true }).createIndex("parDate", "creeeLe");
+        };
+        const base = await enPromesse(requete);
+        base.onversionchange = () => base.close();
+        return base;
+      }
+
+      const listeNotes = document.getElementById("notes");
+      const formNote = document.getElementById("form-note");
+      let base;
+      async function afficherNotes() {
+        const notes = await enPromesse(base.transaction("notes").objectStore("notes").index("parDate").getAll());
+        listeNotes.replaceChildren(
+          ...notes.map((note) => {
+            const li = document.createElement("li");
+            li.textContent = `${note.texte} (${note.creeeLe.toLocaleString("fr-FR")})`;
+            return li;
+          }),
+        );
+        return notes;
+      }
+      async function ajouterNote(texte) {
+        const transaction = base.transaction("notes", "readwrite");
+        transaction.objectStore("notes").add({ texte, creeeLe: new Date() });
+        await finDeTransaction(transaction);
+      }
+
+      try {
+        base = await ouvrirCarnet();
+        formNote.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const texte = new FormData(formNote).get("texte").trim();
+          if (!texte) return;
+          await ajouterNote(texte);
+          formNote.reset();
+          await afficherNotes();
+        });
+        document.getElementById("vider-notes").addEventListener("click", async () => {
+          const transaction = base.transaction("notes", "readwrite");
+          transaction.objectStore("notes").clear();
+          await finDeTransaction(transaction);
+          await afficherNotes();
+        });
+
+        const avant = (await afficherNotes()).length;
+        await ajouterNote("<b>Note</b> de vérification");
+        const apres = await afficherNotes();
+        verifier("IndexedDB : une note ajoutée", apres.length === avant + 1);
+        verifier("IndexedDB conserve les objets Date", apres.at(-1).creeeLe instanceof Date);
+        verifier("le texte de la note n'est pas interprété comme du HTML", !listeNotes.querySelector("b"));
+        const transaction = base.transaction("notes", "readwrite");
+        transaction.objectStore("notes").delete(apres.at(-1).id);
+        await finDeTransaction(transaction);
+        await afficherNotes();
+      } catch (erreur) {
+        listeNotes.textContent = `IndexedDB indisponible ici (${erreur.name}).`;
+      }
+
+      if (navigator.storage?.estimate) {
+        const { usage, quota } = await navigator.storage.estimate();
+        document.getElementById("quota").textContent =
+          `Utilisé : ${(usage / 1024).toFixed(1)} Kio sur environ ${(quota / 1024 ** 3).toFixed(1)} Gio.`;
+      }
+
+      // ---------- Bilan ----------
+      const listeVerifs = document.getElementById("liste-verifications");
+      for (const { description, ok } of resultats) {
+        const li = document.createElement("li");
+        li.className = ok ? "ok" : "ko";
+        li.textContent = `${ok ? "✓" : "✗"} ${description}`;
+        listeVerifs.append(li);
+      }
+      const echecs = resultats.filter((r) => !r.ok).length;
+      document.getElementById("bilan").textContent =
+        `${resultats.length - echecs} vérification(s) réussie(s), ${echecs} échec(s).`;
+    </script>
+  </body>
+</html>

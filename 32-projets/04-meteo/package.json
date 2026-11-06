@@ -1,0 +1,15 @@
+{
+  "name": "meteo",
+  "version": "1.0.0",
+  "description": "Application météo avec l'API Open-Meteo (projet 4 du chapitre 32)",
+  "type": "module",
+  "scripts": {
+    "start": "node ../serveur-statique.js . 8081",
+    "test": "node --test",
+    "check": "node --check src/main.js && node --check src/api.js && node --check src/meteo.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,14 @@
+{
+  "name": "carnet-de-notes",
+  "version": "1.0.0",
+  "description": "Statistiques sur les notes d'une classe (projet 2 du chapitre 32)",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "MIT"
+}

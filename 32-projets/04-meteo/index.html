@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Météo</title>
+    <link rel="stylesheet" href="style.css" />
+    <script type="module" src="src/main.js"></script>
+  </head>
+  <body>
+    <main class="app">
+      <h1>Météo</h1>
+
+      <form id="recherche" role="search">
+        <label for="ville">Ville</label>
+        <div class="ligne">
+          <input
+            id="ville"
+            name="ville"
+            type="search"
+            required
+            minlength="2"
+            placeholder="Lyon, Dakar, Montréal…"
+            autocomplete="off"
+          />
+          <button>Rechercher</button>
+        </div>
+      </form>
+
+      <!-- role="status" : les lecteurs d'écran annoncent les changements de ce texte. -->
+      <p id="statut" class="statut" role="status"></p>
+
+      <section id="resultat" class="resultat" aria-labelledby="lieu" hidden>
+        <h2 id="lieu"></h2>
+        <div class="actuel">
+          <span id="icone" class="icone" aria-hidden="true"></span>
+          <div>
+            <p id="temperature" class="temperature"></p>
+            <p id="description"></p>
+          </div>
+        </div>
+        <dl class="details">
+          <div>
+            <dt>Ressenti</dt>
+            <dd id="ressentie"></dd>
+          </div>
+          <div>
+            <dt>Humidité</dt>
+            <dd id="humidite"></dd>
+          </div>
+          <div>
+            <dt>Vent</dt>
+            <dd id="vent"></dd>
+          </div>
+          <div>
+            <dt>Relevé à</dt>
+            <dd id="heure"></dd>
+          </div>
+        </dl>
+
+        <h3>Prochains jours</h3>
+        <ol id="jours" class="jours"></ol>
+
+        <div id="autres-lieux" hidden>
+          <h3>Vous cherchiez peut-être</h3>
+          <ul id="lieux" class="lieux"></ul>
+        </div>
+      </section>
+
+      <footer class="credits">
+        Données météo :
+        <a href="https://open-meteo.com/">Open-Meteo.com</a> (licence CC BY 4.0)
+      </footer>
+    </main>
+
+    <template id="modele-jour">
+      <li class="jour">
+        <span class="nom"></span>
+        <span class="icone" aria-hidden="true"></span>
+        <span class="description"></span>
+        <span class="temperatures"></span>
+        <span class="pluie"></span>
+      </li>
+    </template>
+  </body>
+</html>

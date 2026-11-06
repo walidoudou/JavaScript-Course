@@ -1,0 +1,8 @@
+{
+  "client": "Camille",
+  "articles": [
+    { "nom": "Clavier", "prixHT": 49.9, "quantite": 1 },
+    { "nom": "Souris", "prixHT": 19.5, "quantite": 2 },
+    { "nom": "Tapis de souris", "prixHT": 7.25, "quantite": 3 }
+  ]
+}
